@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 @Entity
-public class Board {
+public class BoardHits {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,27 +24,13 @@ public class Board {
 
     @ManyToOne
     @JoinColumn
-    private User user;
+    private Board board;
 
     @ManyToOne
     @JoinColumn
-    private BoardType boardType;
-
-    @Column
-    private String title;
-
-    @Column
-    private String contents;
+    private User user;
 
     @Column
     private LocalDateTime regDate;
 
-    @Column
-    private boolean topYn;
-
-    @Column
-    private LocalDate publishStartDate;
-
-    @Column
-    private LocalDate publishEndDate;
 }

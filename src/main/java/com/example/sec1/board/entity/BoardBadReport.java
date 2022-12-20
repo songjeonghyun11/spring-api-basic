@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -15,21 +16,24 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 @Entity
-public class BoardLike {
+public class BoardBadReport {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @ManyToOne
-    @JoinColumn
-    private Board board;
+    //신고자 정보
+    @Column private long userId;
+    @Column private String userName;
+    @Column private String userEmail;
 
-    @ManyToOne
-    @JoinColumn
-    private User user;
+    //신고 게시글 정보
+    @Column private long boardId;
+    @Column private long boardUserId;
+    @Column private String boardTitle;
+    @Column private String boardContents;
+    @Column private LocalDateTime boardRegDate;
 
-    @Column
-    private LocalDateTime regDate;
-
+    @Column private String comments;
+    @Column private LocalDateTime regDate;
 }

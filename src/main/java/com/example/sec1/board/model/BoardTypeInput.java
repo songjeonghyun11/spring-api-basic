@@ -1,2 +1,19 @@
-package com.example.sec1.board.model;public class BoardTypeInput {
+package com.example.sec1.board.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class BoardTypeInput {
+
+    @NotBlank(message="게시판 항목은 필수항목입니다.")
+    private String name;
+
 }

@@ -1,2 +1,15 @@
-package com.example.sec1.board.model;public class BoardTypeUsing {
+package com.example.sec1.board.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class BoardTypeUsing {
+
+    private boolean usingYn;
 }

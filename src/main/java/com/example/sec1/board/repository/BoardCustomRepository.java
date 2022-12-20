@@ -1,51 +1,42 @@
-package com.example.sec1.user.repository;
+package com.example.sec1.board.repository;
 
+import com.example.sec1.board.entity.BoardType;
+import com.example.sec1.board.model.BoardTypeCount;
 import com.example.sec1.user.model.UserLogCount;
 import com.example.sec1.user.model.UserNoticeCount;
 import lombok.RequiredArgsConstructor;
+import org.qlrm.mapper.JpaResultMapper;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Repository
-public class UserCustomRepository {
+public class BoardCustomRepository {
 
     private final EntityManager entityManager;
 
+    public List<BoardTypeCount> getBoardTypeCount() {
 
-    public List<UserNoticeCount> findUserNoticeCount() {
+        String sql = " select bt.id, bt.board_name, bt.reg_date, bt.using_yn " +
+                ", (select count(*) from board b where b.board_type_id = bt.id) as board_count " +
+                "from board_type bt";
 
-        String sql = " select u.id, u.email, u.user_name, (select count(*) from Notice n where n.user_id = u.id) notice_count from User u ";
+        //List<BoardTypeCount> list = entityManager.createNativeQuery(sql).getResultList();
 
-        List<UserNoticeCount> list = entityManager.createNativeQuery(sql).getResultList();
-        return list;
-    }
+      /*  List<Object[]> result = entityManager.createNativeQuery(sql).getResultList();
+        List<BoardTypeCount> resultList = result.stream().map(e -> new BoardTypeCount(e))
+                .collect(Collectors.toList());*/
 
-    public List<UserLogCount> findUserLogCount() {
+        //좀더 간단하게 QLRM을 이용하여 사용
+        Query nativeQuery = entityManager.createNativeQuery(sql);
+        JpaResultMapper jpaResultMapper = new JpaResultMapper();
+        List<BoardTypeCount> resultList = jpaResultMapper.list(nativeQuery,BoardTypeCount.class);
 
-        String sql = " select u.id, u.email, u.user_name, + " +
-                "(select count(*) from notice n where n.user_id = u.id) notice_count " +
-                "(select count(*) from notice_Like nl where nl.user_id = u.id) notice_like_count " +
-                " from user u ";
-
-        List<UserLogCount> list = entityManager.createNativeQuery(sql).getResultList();
-        return list;
-    }
-
-    public List<UserLogCount> findUserLikeBest() {
-
-        String sql = "" +
-                " select t1.id, t1.email, t1.user_name, t1.notice_like_count " +
-                " from " +
-                " ( " +
-                "   select u.*, (selct count(*) from notice_like nl where nl.user_id = u.id) as notice_like_count" +
-                " ) t1" +
-                " order by t1.notice_like_count desc";
-
-        List<UserLogCount> list = entityManager.createNativeQuery(sql).getResultList();
-        return list;
+        return resultList;
     }
 }
 

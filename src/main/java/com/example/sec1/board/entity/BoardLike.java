@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 @Entity
-public class BoardHits {
+public class BoardLike {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

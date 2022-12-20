@@ -1,19 +1,22 @@
-package com.example.sec1.user.entity;
+package com.example.sec1.board.entity;
 
+import com.example.sec1.user.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Builder
-@Data
+
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@Data
 @Entity
-public class UserInterest {
+public class BoardComment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,8 +28,12 @@ public class UserInterest {
 
     @ManyToOne
     @JoinColumn
-    private User interestUser;
+    private Board board;
+
+    @Column
+    private String comments;
 
     @Column
     private LocalDateTime regDate;
+
 }

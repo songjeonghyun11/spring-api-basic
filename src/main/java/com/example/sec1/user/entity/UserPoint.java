@@ -1,19 +1,19 @@
 package com.example.sec1.user.entity;
 
+import com.example.sec1.user.model.UserPointType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
 
-@Builder
 @Data
-@NoArgsConstructor
+@Builder
 @AllArgsConstructor
+@NoArgsConstructor
 @Entity
-public class UserInterest {
+public class UserPoint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,10 +23,10 @@ public class UserInterest {
     @JoinColumn
     private User user;
 
-    @ManyToOne
-    @JoinColumn
-    private User interestUser;
+    @Enumerated(EnumType.STRING)
+    @Column
+    private UserPointType userPointType;
 
     @Column
-    private LocalDateTime regDate;
+    private int point;
 }

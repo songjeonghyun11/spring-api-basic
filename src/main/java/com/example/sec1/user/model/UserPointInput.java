@@ -1,4 +1,5 @@
-package com.example.sec1.board.model;
+package com.example.sec1.user.model;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,9 +8,9 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class BoardBadReportInput {
-    //신고 내용
-    private String comments;
+@NoArgsConstructor
+public class UserPointInput {
+
+    private UserPointType userPointType;
 }

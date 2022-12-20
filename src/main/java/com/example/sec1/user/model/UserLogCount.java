@@ -9,11 +9,12 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserNoticeCount {
+public class UserLogCount {
 
     private long id;
     private String email;
     private String userName;
 
     private long noticeCount;
+    private long noticeLikeCount;
 }

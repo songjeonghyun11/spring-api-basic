@@ -1,31 +1,51 @@
 package com.example.sec1.user.repository;
 
-import com.example.sec1.user.entity.User;
-import com.example.sec1.user.model.UserStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import com.example.sec1.user.model.UserLogCount;
+import com.example.sec1.user.model.UserNoticeCount;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import javax.persistence.EntityManager;
 import java.util.List;
-import java.util.Optional;
 
+@RequiredArgsConstructor
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public class UserCustomRepository {
 
-    int countByEmail(String email);
+    private final EntityManager entityManager;
 
-    Optional<User> findByIdAndPassword(long id, String password);
 
-    Optional<User> findByUserNameAndPhone(String userName, String phone);
+    public List<UserNoticeCount> findUserNoticeCount() {
 
-    Optional<User> findByEmail(String email);
+        String sql = " select u.id, u.email, u.user_name, (select count(*) from Notice n where n.user_id = u.id) notice_count from User u ";
 
-    List<User> findByEmailContainsOrPhoneContainsOrUserNameContains(String email, String phone, String userName);
+        List<UserNoticeCount> list = entityManager.createNativeQuery(sql).getResultList();
+        return list;
+    }
 
-    long countByStatus(UserStatus userStatus);
+    public List<UserLogCount> findUserLogCount() {
 
-    @Query(" select u from User u where u.regDate between :startDate and :endDate ")
-    List<User> findToday(LocalDateTime startDate, LocalDateTime endDate);
+        String sql = " select u.id, u.email, u.user_name, + " +
+                "(select count(*) from notice n where n.user_id = u.id) notice_count " +
+                "(select count(*) from notice_Like nl where nl.user_id = u.id) notice_like_count " +
+                " from user u ";
+
+        List<UserLogCount> list = entityManager.createNativeQuery(sql).getResultList();
+        return list;
+    }
+
+    public List<UserLogCount> findUserLikeBest() {
+
+        String sql = "" +
+                " select t1.id, t1.email, t1.user_name, t1.notice_like_count " +
+                " from " +
+                " ( " +
+                "   select u.*, (selct count(*) from notice_like nl where nl.user_id = u.id) as notice_like_count" +
+                " ) t1" +
+                " order by t1.notice_like_count desc";
+
+        List<UserLogCount> list = entityManager.createNativeQuery(sql).getResultList();
+        return list;
+    }
 }
 

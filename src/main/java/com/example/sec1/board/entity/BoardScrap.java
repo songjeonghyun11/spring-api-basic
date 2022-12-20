@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -16,19 +15,19 @@ import java.time.LocalDateTime;
 @Builder
 @Data
 @Entity
-public class BoardBadReport {
+public class BoardScrap {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    //신고자 정보
-    @Column private long userId;
-    @Column private String userName;
-    @Column private String userEmail;
+    @ManyToOne
+    @JoinColumn
+    private User user;
 
-    //신고 게시글 정보
+    //스크랩글 정보
     @Column private long boardId;
+    @Column private long boardTypeId;
     @Column private long boardUserId;
     @Column private String boardTitle;
     @Column private String boardContents;

@@ -1,6 +1,13 @@
 package com.example.sec1.user.controller;
 
 import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.SignatureVerificationException;
+import com.example.sec1.board.entity.Board;
+import com.example.sec1.board.entity.BoardComment;
+import com.example.sec1.board.model.ServiceResult;
+import com.example.sec1.board.service.BoardService;
+import com.example.sec1.common.model.ResponseResult;
 import com.example.sec1.notice.Entity.Notice;
 import com.example.sec1.notice.model.NoticeResponse;
 import com.example.sec1.notice.model.ResponseError;
@@ -12,7 +19,10 @@ import com.example.sec1.user.exception.PasswordNotMatchException;
 import com.example.sec1.user.exception.UserNotFoundException;
 import com.example.sec1.user.model.*;
 import com.example.sec1.user.repository.UserRepository;
+import com.example.sec1.user.service.PointService;
+import com.example.sec1.util.JWTUtils;
 import com.example.sec1.util.PasswordUtils;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -22,6 +32,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -36,6 +47,9 @@ public class ApiUserController {
     private final UserRepository userRepository;
     private final NoticeRepository noticeRepository;
     private final NoticeLikeRepository noticeLikeRepository;
+
+    private final BoardService boardService;
+    private final PointService pointService;
 
     /*@PostMapping("/api/user")
     public ResponseEntity<?> addUser(@RequestBody @Valid UserInput userInput, Errors errors) {
@@ -287,7 +301,7 @@ public class ApiUserController {
     }*/
 
     //44
-    @PostMapping("/api/user/login")
+  /*  @PostMapping("/api/user/login")
     public ResponseEntity<?> createToken(@RequestBody @Valid UserLogin userLogin, Errors errors) {
 
         List<ResponseError> responseErrorList = new ArrayList<>();
@@ -305,14 +319,132 @@ public class ApiUserController {
         }
 
         //토큰발행시점
-        JWT.create()
+        String token = JWT.create()
                 .withExpiresAt(new Date())
                 .withClaim("user_id",user.getPhone())
                 .withSubject(user.getUserName())
                 .withIssuer(user.getEmail())
-                .w
+                .sign(Algorithm.HMAC512("fastcampus".getBytes()));
+
+        return ResponseEntity.ok().body(UserLoginToken.builder().token(token).build());
+    }*/
+
+    //45
+    @PostMapping("/api/user/login")
+    public ResponseEntity<?> createToken(@RequestBody @Valid UserLogin userLogin, Errors errors) {
+
+        List<ResponseError> responseErrorList = new ArrayList<>();
+        if (errors.hasErrors()) {
+            errors.getAllErrors().stream().forEach((e) -> {
+                responseErrorList.add(ResponseError.of((FieldError) e));
+            });
+            return new ResponseEntity<>(responseErrorList, HttpStatus.BAD_REQUEST);
+        }
+        User user = userRepository.findByEmail(userLogin.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("사용자 정보가 없습니다."));
+
+        if(PasswordUtils.equalPassword((userLogin.getPassword()), user.getPassword())) {
+            throw new PasswordNotMatchException("비밀번호가 일치하지 않습니다.");
+        }
+
+        LocalDateTime expiredDateTime = LocalDateTime.now().plusMonths(1);
+        Date expiredDate = java.sql.Timestamp.valueOf(expiredDateTime);
+        //토큰발행시점
+        String token = JWT.create()
+                .withExpiresAt(expiredDate)
+                .withClaim("user_id",user.getPhone())
+                .withSubject(user.getUserName())
+                .withIssuer(user.getEmail())
+                .sign(Algorithm.HMAC512("fastcampus".getBytes()));
+
+        return ResponseEntity.ok().body(UserLoginToken.builder().token(token).build());
+    }
+
+    @PatchMapping("/api/user/login")
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+
+        String token = request.getHeader("TOKEN");
+        String email = "";
+        try {
+            email = JWT.require(Algorithm.HMAC512("fastcampus".getBytes()))
+                    .build()
+                    .verify(token)
+                    .getIssuer();
+        } catch(SignatureVerificationException e) {
+            throw new PasswordNotMatchException("비밀번호가 일치하지 않습니다.");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("사용자 정보가 없습니다."));
+
+        LocalDateTime expiredDateTime = LocalDateTime.now().plusMonths(1);
+        Date expiredDate = java.sql.Timestamp.valueOf(expiredDateTime);
+
+        String newToken = JWT.create()
+                .withExpiresAt(expiredDate)
+                .withClaim("user_id",user.getPhone())
+                .withSubject(user.getUserName())
+                .withIssuer(user.getEmail())
+                .sign(Algorithm.HMAC512("fastcampus".getBytes()));
+
+        return ResponseEntity.ok().body(UserLoginToken.builder().token(newToken).build());
+    }
+
+    @DeleteMapping("/api/user/login")
+    public ResponseEntity<?> removeToken(@RequestHeader("TOKEN") String token) {
+
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch(SignatureVerificationException e) {
+            return new ResponseEntity<>("토큰 정보가 정확하지 않습니다.", HttpStatus.BAD_REQUEST);
+        }
+        //세션, 쿠기삭제
+        //클라이언트 쿠키/로컬스토리지/세션스토리지
+        //블랙리스트 작성
 
         return ResponseEntity.ok().build();
+    }
+
+    //80-내가 작성한 게시글 목록
+    @GetMapping("/api/user/board/post")
+    public ResponseEntity<?> myPost(@RequestHeader("TOKEN") String token) {
+
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch(SignatureVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+
+        List<Board> list = boardService.postList(email);
+        return ResponseResult.success(list);
+    }
+
+    //81-내가 작성한 게시글의 코멘트 목록
+    @GetMapping("/api/user/board/comment")
+    public ResponseEntity<?> myComments(@RequestHeader("TOKEN") String token) {
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch(SignatureVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        List<BoardComment> list = boardService.commentList(email);
+        return ResponseResult.success(list);
+    }
+
+    //82-사용자 포인트정보, 게시글 작성 시 포인트를 누적
+    @PostMapping("/api/user/point")
+    public ResponseEntity<?> userPoint(@RequestHeader("TOKEN") String token,@RequestBody UserPointInput userPointInput) {
+        String email = "";
+        try {
+            email = JWTUtils.getIssuer(token);
+        } catch(SignatureVerificationException e) {
+            return ResponseResult.fail("토큰 정보가 정확하지 않습니다.");
+        }
+        ServiceResult result = pointService.addPoint(email, userPointInput);
+        return ResponseResult.result(result);
     }
 }
 
